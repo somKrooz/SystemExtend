@@ -19,12 +19,20 @@ static PyObject* py_Log(PyObject* self  , PyObject* args){
     Py_RETURN_NONE;
 }
 
+void Krooz(std::string Message){
+    std::cout<<Message + "Krooz"<<"\n";
+}
 
-static PyMethodDef Methods[]  = {
-    {"log" , py_Log, METH_VARARGS , "Log Data"},
-    {nullptr , nullptr , 1,nullptr}
-};
+static PyObject* py_Krooz(PyObject* self  , PyObject* args){
+    const char* Message;
+    if(!PyArg_ParseTuple(args ,"s",&Message)){
+        return nullptr;
+    }
+    Krooz(Message);
+    Py_RETURN_NONE;
+}
 
+static PyMethodDef Methods[100];
 static PyModuleDef Module = {
     PyModuleDef_HEAD_INIT,
     "Krooz",
@@ -33,9 +41,23 @@ static PyModuleDef Module = {
     Methods
 };
 
-PyMODINIT_FUNC Engine () {
+PyMODINIT_FUNC Engine() {
+    static PyMethodDef Krooz[] = {
+        {"log", py_Log, METH_VARARGS, "Do His Thing"},
+        {"krooz", py_Krooz, METH_VARARGS, "Do Shit"},
+        {NULL, NULL, 0, NULL}  
+    };
+    
+    int i = 0;
+    for(auto &ent : Krooz)
+    {
+        Methods[i] = Krooz[i];
+        i++; 
+    }
+
     return PyModule_Create(&Module);
 }
+
 
 int main() {
     InitWindow(1200, 600, "Krooz Engine");
