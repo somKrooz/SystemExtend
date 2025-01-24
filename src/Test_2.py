@@ -1,4 +1,4 @@
 import Krooz
 
 def Update():
-    Krooz.log("TEST_1\n")
+    Krooz.create_text("Why is This Working" , 120,100 ,40)
