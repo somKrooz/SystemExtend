@@ -1,4 +1,4 @@
 import Krooz
 
 def Update():
-    Krooz.log("This is So Sick")
+    Krooz.log("TEST_1\n")
