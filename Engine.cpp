@@ -6,7 +6,6 @@
 #include <raylib.h>
 #include <Loader.h>
 
-
 struct Text {
     const char* Text;
     float x;
@@ -17,6 +16,7 @@ struct Text {
 struct Button {
     Rectangle Dim;
     const char* Label;
+    PyObject* Onclick;
 };
 
 std::vector<Text> GlobalText; 
@@ -36,6 +36,10 @@ bool K_Button() {
         DrawText(ent.Label, ent.Dim.x + (ent.Dim.width - textSize.x) / 2, ent.Dim.y + (ent.Dim.height - textSize.y) / 2, 20, WHITE);
 
         if (isHovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+
+            if (ent.Onclick) {
+                PyObject_CallObject(ent.Onclick, nullptr); 
+            }
             anyButtonClicked = true;
         }
     }    
@@ -46,12 +50,19 @@ bool K_Button() {
 static PyObject* py_Button(PyObject* self, PyObject* args) {
     const char* Label;
     float x1, y1, wid, height;
+    PyObject* callback;
     
-    if (!PyArg_ParseTuple(args, "sffff", &Label, &x1, &y1, &wid, &height)) {
+    if (!PyArg_ParseTuple(args, "sffffO", &Label, &x1, &y1, &wid, &height,&callback)) {
         return nullptr; 
     }
+
+    if(!PyCallable_Check(callback)){
+        return nullptr;
+    }
+
+    Py_XINCREF(callback);
     Rectangle rect = {x1, y1, wid, height};
-    Button buttonComp = {rect, Label}; 
+    Button buttonComp = {rect, Label,callback}; 
     K_Button_Push(buttonComp);
     Py_RETURN_NONE; 
 }
