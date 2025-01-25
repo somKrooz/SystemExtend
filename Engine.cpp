@@ -19,8 +19,36 @@ struct Button {
     PyObject* Onclick;
 };
 
+struct CallBack{
+    PyObject* onUpdate;
+};
+
 std::vector<Text> GlobalText; 
 std::vector<Button> GlobalButtons; 
+std::vector<CallBack> CallBacks;
+
+void K_CallBacks(const CallBack& cb){
+    CallBacks.push_back(cb);
+}
+
+PyObject* py_CallBack(PyObject* self, PyObject* args) {
+    PyObject* onUpdate;
+    
+    if (!PyArg_ParseTuple(args, "O", &onUpdate)) {
+        return nullptr;
+    }
+
+    if (!PyCallable_Check(onUpdate)) {
+        PyErr_SetString(PyExc_TypeError, "Argument must be callable");
+        return nullptr;
+    }
+
+    Py_INCREF(onUpdate);  
+    CallBack cb = {onUpdate};
+    K_CallBacks(cb);
+
+    Py_RETURN_NONE;  
+}
 
 void K_Button_Push(const Button& btn) {
     GlobalButtons.push_back(btn);
@@ -35,17 +63,27 @@ bool K_Button() {
         Vector2 textSize = MeasureTextEx(GetFontDefault(), ent.Label, 20, 1);
         DrawText(ent.Label, ent.Dim.x + (ent.Dim.width - textSize.x) / 2, ent.Dim.y + (ent.Dim.height - textSize.y) / 2, 20, WHITE);
 
-        if (isHovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-
+        if (isHovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) 
+        {
             if (ent.Onclick) {
                 PyObject_CallObject(ent.Onclick, nullptr); 
             }
+
             anyButtonClicked = true;
         }
     }    
     return anyButtonClicked;
 }
 
+void Rest(){
+    for(auto &ent : GlobalButtons){
+        if (ent.Onclick) {
+            Py_XDECREF(ent.Onclick);  
+        }
+    }
+    GlobalButtons.clear();
+    GlobalText.clear();
+}
 
 static PyObject* py_Button(PyObject* self, PyObject* args) {
     const char* Label;
@@ -68,7 +106,20 @@ static PyObject* py_Button(PyObject* self, PyObject* args) {
 }
 
 void K_Text(const Text& Params) {
-    GlobalText.push_back(Params); 
+    bool found = false;
+    
+    for (auto& text : GlobalText) {
+        if (text.x == Params.x && text.y == Params.y) {  
+            text.Text = Params.Text;
+            text.size = Params.size;
+            found = true;
+            break;
+        }
+    }
+    
+    if (!found) {
+        GlobalText.push_back(Params);
+    }
 }
 
 static PyObject* py_Text(PyObject* self, PyObject* args) {
@@ -97,9 +148,11 @@ static PyObject* py_Log(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+
 static PyMethodDef Methods[] = {
     {"log", py_Log, METH_VARARGS, "Logs The Data"},
     {"create_text", py_Text, METH_VARARGS, "Creates a Text"},
+    {"set_calls", py_CallBack, METH_VARARGS, "Create Calls"},
     {"create_button", py_Button, METH_VARARGS, "Creates a Button"},
     {NULL, NULL, 0, NULL}  
 };
@@ -112,6 +165,7 @@ static PyModuleDef Module = {
     Methods
 };
 
+
 PyMODINIT_FUNC Engine() {
     return PyModule_Create(&Module);
 }
@@ -122,17 +176,19 @@ int main() {
     PyImport_AppendInittab("Krooz", &Engine);
     Py_Initialize();    
     Loader RuntimeLoader;
-
     std::string source = "src";
+
     if (!RuntimeLoader.Get_RuntimeModules(source)) {
         Py_Finalize();
         return -1;
     }
-    RuntimeLoader.ExecuteBatch();
+
+    RuntimeLoader.ExecuteBatch(); 
 
     while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_W)) {
             GlobalText.clear();
+            Rest();
             GlobalButtons.clear();
             RuntimeLoader.Reload_RuntimeModules();
         }
@@ -145,6 +201,15 @@ int main() {
 
         for (auto& ent : GlobalButtons) {
             if(K_Button()){};
+        }
+
+        for(auto& ent : CallBacks){
+            PyObject* result = PyObject_CallObject(ent.onUpdate, nullptr); 
+            if (!result) {
+                PyErr_Print();
+            } else {
+                Py_DECREF(result);  
+            }
         }
 
         EndDrawing();

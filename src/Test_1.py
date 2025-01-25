@@ -1,7 +1,8 @@
+# Best ref Id {100, 200, 200, 50}
 import Krooz
 
-def onclick():
-    Krooz.log("Is This Working")
+def Test():
+    Krooz.log("Krooz")
 
-def Update():        
-    Krooz.create_button("Krooz", 100, 200, 200, 50 , onclick)
+def Update():
+    Krooz.create_button("Japan",100, 200, 200, 50,Test)
