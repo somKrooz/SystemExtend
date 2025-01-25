@@ -1,6 +1,7 @@
 import Krooz   # type: ignore
 
 size = 10
+
 def Small():
     global size
     size = 20
@@ -19,5 +20,7 @@ def Dynamic():
 
 def Update():
     global size
+    global img
     Krooz.set_calls(Dynamic)
     Krooz.create_button("Small",200, 200, 200, 50,Small)
+    Krooz.create_pix(r"C:\Users\SomKrooz\Downloads\man7kui5g3gd1.jpeg", 500,200 , .3)

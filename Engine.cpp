@@ -23,9 +23,61 @@ struct CallBack{
     PyObject* onUpdate;
 };
 
+struct Pixels
+{
+    Texture2D tex;
+    float x;
+    float y;
+    float scale;
+};
+
+
 std::vector<Text> GlobalText; 
 std::vector<Button> GlobalButtons; 
 std::vector<CallBack> CallBacks;
+std::vector<Pixels> GlobalPixels;
+
+void K_Pixels(const Pixels& pixel){
+    bool found = false;
+
+    for(auto &ent: GlobalPixels){
+        if(ent.x == pixel.x && ent.y == pixel.y){
+            ent.tex = pixel.tex;
+            ent.x = pixel.x;
+            ent.y = pixel.y;
+            ent.scale = pixel.scale;  
+            found = true;
+            break;
+        }
+    }
+
+    if(!found){
+        GlobalPixels.push_back(pixel);
+    }
+}
+
+
+static PyObject* py_Pixel(PyObject* self , PyObject* args){
+    const char* tex;
+    float x;
+    float y ;
+    float  scale;
+
+    if(!PyArg_ParseTuple(args , "sfff" ,&tex, &x , &y , &scale)){
+        return nullptr;
+    }
+    Texture2D sprite = LoadTexture(tex);
+    Pixels pix = {sprite, x ,y , scale};
+    K_Pixels(pix);
+    Py_RETURN_NONE;
+}
+
+void PixUpdate(){
+    for(auto &ent : GlobalPixels){
+        Vector2 location = { ent.x , ent.y} ;
+        DrawTextureEx(ent.tex,location , 0.0f, ent.scale, WHITE); 
+    }
+} 
 
 void K_CallBacks(const CallBack& cb){
     CallBacks.push_back(cb);
@@ -81,9 +133,11 @@ void Rest(){
             Py_XDECREF(ent.Onclick);  
         }
     }
+    GlobalPixels.clear();
     GlobalButtons.clear();
     GlobalText.clear();
 }
+
 
 static PyObject* py_Button(PyObject* self, PyObject* args) {
     const char* Label;
@@ -154,6 +208,7 @@ static PyMethodDef Methods[] = {
     {"create_text", py_Text, METH_VARARGS, "Creates a Text"},
     {"set_calls", py_CallBack, METH_VARARGS, "Create Calls"},
     {"create_button", py_Button, METH_VARARGS, "Creates a Button"},
+    {"create_pix", py_Pixel, METH_VARARGS, "Creates a Textured Object"},
     {NULL, NULL, 0, NULL}  
 };
 
@@ -194,6 +249,10 @@ int main() {
         }
         BeginDrawing();
         ClearBackground(RAYWHITE);
+
+        for(auto& ent : GlobalPixels){
+            PixUpdate();
+        }
 
         for (auto& ent : GlobalText) {
             DrawText(ent.Text, ent.x, ent.y, ent.size, RED);
