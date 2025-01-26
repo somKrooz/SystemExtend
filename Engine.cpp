@@ -31,11 +31,52 @@ struct Pixels
     float scale;
 };
 
+struct AttrUpdate{
+    float val;
+    float UpdateVal;
+};
 
 std::vector<Text> GlobalText; 
 std::vector<Button> GlobalButtons; 
 std::vector<CallBack> CallBacks;
 std::vector<Pixels> GlobalPixels;
+std::vector<AttrUpdate> GlobalAttrUpdate;
+
+static PyObject* py_Expose(PyObject* self, PyObject* args) {
+    int value;
+    if (!PyArg_ParseTuple(args, "i", &value)) {
+        return nullptr;
+    }
+    float res = GlobalAttrUpdate[value].val;
+    return PyFloat_FromDouble(res); 
+}
+
+void K_AttrUpdate(const AttrUpdate& AU) {
+    bool found = false;
+    for (auto &ent : GlobalAttrUpdate) {
+        if (ent.val == AU.val && ent.UpdateVal == AU.UpdateVal) {
+            ent.val = AU.val;
+            ent.UpdateVal = AU.UpdateVal;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        GlobalAttrUpdate.push_back(AU);
+    }
+}
+
+static PyObject* py_AttrUpdate(PyObject* self, PyObject* args) {
+    float val, UpdateVal;
+    if (!PyArg_ParseTuple(args, "ff", &val, &UpdateVal)) {
+        return nullptr;
+    }
+
+    AttrUpdate AU = {val, UpdateVal};
+    K_AttrUpdate(AU);
+    Py_RETURN_NONE; 
+}
 
 void K_Pixels(const Pixels& pixel){
     bool found = false;
@@ -142,9 +183,9 @@ void Rest(){
 static PyObject* py_Button(PyObject* self, PyObject* args) {
     const char* Label;
     float x1, y1, wid, height;
-    PyObject* callback;
+    PyObject* callback  = nullptr;
     
-    if (!PyArg_ParseTuple(args, "sffffO", &Label, &x1, &y1, &wid, &height,&callback)) {
+    if (!PyArg_ParseTuple(args, "sffff|O", &Label, &x1, &y1, &wid, &height,&callback)) {
         return nullptr; 
     }
 
@@ -202,6 +243,21 @@ static PyObject* py_Log(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+static PyObject* py_NativeData(PyObject* self, PyObject* args) {
+    PyObject* Attrs = PyList_New(3);
+    if (!Attrs) {
+        return nullptr; 
+    }
+
+    float Height = GetScreenHeight();
+    float Width = GetScreenWidth();
+
+    PyList_SetItem(Attrs, 0, PyFloat_FromDouble(Height)); 
+    PyList_SetItem(Attrs, 1, PyFloat_FromDouble(Width));  
+    
+    return Attrs;
+}
+
 
 static PyMethodDef Methods[] = {
     {"log", py_Log, METH_VARARGS, "Logs The Data"},
@@ -209,6 +265,9 @@ static PyMethodDef Methods[] = {
     {"set_calls", py_CallBack, METH_VARARGS, "Create Calls"},
     {"create_button", py_Button, METH_VARARGS, "Creates a Button"},
     {"create_pix", py_Pixel, METH_VARARGS, "Creates a Textured Object"},
+    {"updateAttr", py_AttrUpdate, METH_VARARGS, "Creates a Textured Object"},
+    {"expose", py_Expose, METH_VARARGS, "Creates a AttrObject"},
+    {"getAttrs", py_NativeData, METH_VARARGS, "get native Attrs"},
     {NULL, NULL, 0, NULL}  
 };
 
@@ -239,8 +298,9 @@ int main() {
     }
 
     RuntimeLoader.ExecuteBatch(); 
-
+    int times = 100;
     while (!WindowShouldClose()) {
+
         if (IsKeyPressed(KEY_W)) {
             GlobalText.clear();
             Rest();
@@ -269,6 +329,11 @@ int main() {
             } else {
                 Py_DECREF(result);  
             }
+        }
+
+        float Delta = GetFrameTime();
+        for(auto& ent : GlobalAttrUpdate){
+            ent.val += ent.UpdateVal*Delta;
         }
 
         EndDrawing();

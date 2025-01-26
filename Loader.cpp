@@ -37,8 +37,8 @@ void Loader::ExecuteBatch(){
             Py_DECREF(Res);
         } 
         else{
-            PyErr_Print();
-            exit(0);
+           PyErr_Print();
+           continue;
         }
     }
 }
