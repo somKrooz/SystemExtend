@@ -243,6 +243,21 @@ static PyObject* py_Log(PyObject* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+static PyObject* GetMouseData(PyObject* self , PyObject* args){
+    PyObject* Attrs = PyList_New(3);
+    if(!Attrs){
+        return nullptr;
+    }
+
+    float x = GetMousePosition().x;
+    float y = GetMousePosition().y;
+    
+    PyList_SetItem(Attrs , 0 ,PyFloat_FromDouble(x));
+    PyList_SetItem(Attrs , 1 ,PyFloat_FromDouble(y));
+
+    return Attrs;
+}
+
 static PyObject* py_NativeData(PyObject* self, PyObject* args) {
     PyObject* Attrs = PyList_New(3);
     if (!Attrs) {
@@ -250,7 +265,7 @@ static PyObject* py_NativeData(PyObject* self, PyObject* args) {
     }
 
     float Height = GetScreenHeight();
-    float Width = GetScreenWidth();
+    float Width = GetScreenWidth(); 
 
     PyList_SetItem(Attrs, 0, PyFloat_FromDouble(Height)); 
     PyList_SetItem(Attrs, 1, PyFloat_FromDouble(Width));  
@@ -268,6 +283,7 @@ static PyMethodDef Methods[] = {
     {"updateAttr", py_AttrUpdate, METH_VARARGS, "Creates a Textured Object"},
     {"expose", py_Expose, METH_VARARGS, "Creates a AttrObject"},
     {"getAttrs", py_NativeData, METH_VARARGS, "get native Attrs"},
+    {"getMouse" , GetMouseData , METH_NOARGS , "Get Mouse Data"},
     {NULL, NULL, 0, NULL}  
 };
 

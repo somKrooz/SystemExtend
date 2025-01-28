@@ -1,4 +1,7 @@
 import Krooz   # type: ignore
 
+def Follow():
+    Krooz.create_text("Follow" ,Krooz.getMouse()[0] ,Krooz.getMouse()[1] , 30)
+
 def Update():
-    Krooz.log("Log This File as Well Please....")
+    Krooz.set_calls(Follow)
