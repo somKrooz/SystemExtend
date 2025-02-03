@@ -169,14 +169,15 @@ bool K_Button() {
 }
 
 void Rest(){
-    for(auto &ent : GlobalButtons){
+    for (auto& ent : GlobalButtons) {
         if (ent.Onclick) {
-            Py_XDECREF(ent.Onclick);  
+            Py_XDECREF(ent.Onclick);  // Decrease reference count
         }
     }
     GlobalPixels.clear();
     GlobalButtons.clear();
     GlobalText.clear();
+    GlobalAttrUpdate.clear();  // Clear other data if necessary
 }
 
 
@@ -202,10 +203,12 @@ static PyObject* py_Button(PyObject* self, PyObject* args) {
 
 void K_Text(const Text& Params) {
     bool found = false;
-    
+
     for (auto& text : GlobalText) {
-        if (text.x == Params.x && text.y == Params.y) {  
+        if (text.Text == Params.Text) {
             text.Text = Params.Text;
+            text.x = Params.x;
+            text.y = Params.y;
             text.size = Params.size;
             found = true;
             break;
@@ -216,6 +219,7 @@ void K_Text(const Text& Params) {
         GlobalText.push_back(Params);
     }
 }
+
 
 static PyObject* py_Text(PyObject* self, PyObject* args) {
     const char* text;
@@ -323,9 +327,9 @@ int main() {
             GlobalButtons.clear();
             RuntimeLoader.Reload_RuntimeModules();
         }
+        
         BeginDrawing();
         ClearBackground(RAYWHITE);
-
         for(auto& ent : GlobalPixels){
             PixUpdate();
         }
@@ -351,7 +355,6 @@ int main() {
         for(auto& ent : GlobalAttrUpdate){
             ent.val += ent.UpdateVal*Delta;
         }
-
         EndDrawing();
     }
 

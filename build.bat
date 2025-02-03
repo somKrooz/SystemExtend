@@ -12,16 +12,16 @@ REM Source file
 set SRC=Engine.cpp Loader.cpp
 
 REM Include directories
-set INCLUDES=/I"C:/Program Files/Python313/include"^
+set INCLUDES=/I"./vendor/Python/include"^
             /I"./include"^
-            /I"C:/Users/SomKrooz/Downloads/raylib-5.5_win64_msvc16/raylib-5.5_win64_msvc16/include"
+            /I"./vendor/raylib/include"
 
 REM Library paths
-set LIBPATHS=/LIBPATH:"C:/Program Files/Python313/libs" ^
-             /LIBPATH:"C:/Users/SomKrooz/Downloads/raylib-5.5_win64_msvc16/raylib-5.5_win64_msvc16/lib"
+set LIBPATHS=/LIBPATH:"./vendor/Python\lib" ^
+             /LIBPATH:"./vendor/raylib/lib"
 
 REM Libraries to link
-set LIBS=python313.lib ^
+set LIBS=python312.lib ^
         raylib.lib ^
         legacy_stdio_definitions.lib ^
         msvcrt.lib ^
