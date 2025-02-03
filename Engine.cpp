@@ -11,6 +11,7 @@ struct Text {
     float x;
     float y;
     float size;
+    int id;
 };
 
 struct Button {
@@ -171,13 +172,13 @@ bool K_Button() {
 void Rest(){
     for (auto& ent : GlobalButtons) {
         if (ent.Onclick) {
-            Py_XDECREF(ent.Onclick);  // Decrease reference count
+            Py_XDECREF(ent.Onclick);  
         }
     }
     GlobalPixels.clear();
+    GlobalAttrUpdate.clear();
     GlobalButtons.clear();
     GlobalText.clear();
-    GlobalAttrUpdate.clear();  // Clear other data if necessary
 }
 
 
@@ -205,11 +206,12 @@ void K_Text(const Text& Params) {
     bool found = false;
 
     for (auto& text : GlobalText) {
-        if (text.Text == Params.Text) {
+        if (text.id == Params.id) {
             text.Text = Params.Text;
             text.x = Params.x;
             text.y = Params.y;
             text.size = Params.size;
+            text.id = Params.id;
             found = true;
             break;
         }
@@ -224,12 +226,13 @@ void K_Text(const Text& Params) {
 static PyObject* py_Text(PyObject* self, PyObject* args) {
     const char* text;
     float x, y, size;
+    int id;
     
-    if (!PyArg_ParseTuple(args, "sfff", &text, &x, &y, &size)) {
+    if (!PyArg_ParseTuple(args, "sfffi", &text, &x, &y, &size , &id)) {
         return nullptr; 
     }
     
-    Text textComp = {text, x, y, size};
+    Text textComp = {text, x, y, size , id};
     K_Text(textComp);
     Py_RETURN_NONE; 
 }
@@ -320,11 +323,9 @@ int main() {
     RuntimeLoader.ExecuteBatch(); 
     int times = 100;
     while (!WindowShouldClose()) {
-
+        float Delta = GetFrameTime();
         if (IsKeyPressed(KEY_W)) {
-            GlobalText.clear();
             Rest();
-            GlobalButtons.clear();
             RuntimeLoader.Reload_RuntimeModules();
         }
         
@@ -351,7 +352,6 @@ int main() {
             }
         }
 
-        float Delta = GetFrameTime();
         for(auto& ent : GlobalAttrUpdate){
             ent.val += ent.UpdateVal*Delta;
         }
