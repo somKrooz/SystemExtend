@@ -1,21 +1,58 @@
-import Krooz  
+import Krooz
 
-def Check():
-    size = float(Krooz.expose(0))
-    size2 = float(Krooz.expose(1))
-    if(size >= 60):
-        size = 60
+class MyEntity:
+    def __init__(self):
+        self.pox = 0
 
-    if(size2>=60):
-        size2 = 60  
+    def update(self, dt):
+        self.pox += 10 *dt
 
-    Krooz.create_text("Hello", 100, 100, size2 , 1)
-    Krooz.create_text("CHill", 700, 100, size,2)
-    Krooz.create_text("Japan", 300, 100, size2,3)
-    Krooz.create_text("Pop", 500, 100, size2,5)
+    def draw(self):
+        Krooz.create_text("KroozIsCool", self.pox , 100 , 30, 100 )
+
+
+class MyEntity2:
+    def __init__(self):
+        self.pox = 0
+
+    def update(self, dt):
+        self.pox += 10 *dt
+
+    def draw(self):
+        Krooz.create_text("Shit", self.pox , 500 , 30, 130 )
+
+
+class MyEntity3:
+    def __init__(self):
+        self.pox = 0
+
+    def update(self, dt):
+        self.pox += 10 *dt
+
+    def draw(self):
+        Krooz.create_text("Hello", self.pox , 300 , 30, 234 )
+
+krooz = MyEntity()
+krooz2 = MyEntity2()
+krooz= MyEntity3()
+Krooz.RegisterEntity(krooz)
+Krooz.RegisterEntity(krooz2)
+
+
+# import Krooz  
+
+# def Check():
+#     size = float(Krooz.expose(0))
+#     size2 = float(Krooz.expose(1))
+#     if(size >= 60):
+#         size = 60
+
+#     if(size2>=60):
+#         size2 = 60  
+
+#     Krooz.create_text("Hello", 1280/2, 700/2, size2 , 1)
     
-
-def Update():
-    Krooz.updateAttr(2.0, 10)  
-    Krooz.updateAttr(1.0,20)  
-    Krooz.set_calls(Check)
+# def Update():
+#     Krooz.updateAttr(2.0, 10)  
+#     Krooz.updateAttr(1.0,20)  
+#     Krooz.set_calls(Check)

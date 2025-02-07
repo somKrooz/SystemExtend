@@ -5,6 +5,56 @@
 #include <string>
 #include <raylib.h>
 #include <Loader.h>
+#include <memory>
+#include <Entity.h>
+#include <Application.h>
+
+
+Application app;
+
+class PythonEntity : public Entity {
+    private:
+        PyObject* pyInstance;
+        PyObject* drawMethod;
+        PyObject* updateMethod;
+    
+    public:
+        PythonEntity(PyObject* instance) : pyInstance(instance) {
+            Py_XINCREF(pyInstance);
+            drawMethod = PyObject_GetAttrString(pyInstance, "draw");
+            updateMethod = PyObject_GetAttrString(instance, "update");
+        }
+    
+        ~PythonEntity() {
+            Py_XDECREF(pyInstance);
+            Py_XDECREF(drawMethod);
+            Py_XDECREF(updateMethod);
+        }
+    
+        void Draw() override {
+            if (drawMethod && PyCallable_Check(drawMethod)) {
+                PyObject* result = PyObject_CallObject(drawMethod, nullptr);
+                if (!result) {
+                    PyErr_Print();
+                } else {
+                    Py_DECREF(result);
+                }
+            }
+        }
+    
+        void Update(float dt) override {
+            if (updateMethod && PyCallable_Check(updateMethod)) {
+                PyObject* args = Py_BuildValue("(f)", dt);
+                PyObject* result = PyObject_CallObject(updateMethod, args);
+                Py_DECREF(args);
+                if (!result) {
+                    PyErr_Print();
+                } else {
+                    Py_DECREF(result);
+                }
+            }
+        }
+};
 
 struct Text {
     const char* Text;
@@ -42,6 +92,7 @@ std::vector<Button> GlobalButtons;
 std::vector<CallBack> CallBacks;
 std::vector<Pixels> GlobalPixels;
 std::vector<AttrUpdate> GlobalAttrUpdate;
+std::vector<std::unique_ptr<Entity>> ENT;
 
 static PyObject* py_Expose(PyObject* self, PyObject* args) {
     int value;
@@ -179,6 +230,7 @@ void Rest(){
     GlobalAttrUpdate.clear();
     GlobalButtons.clear();
     GlobalText.clear();
+
 }
 
 
@@ -276,8 +328,26 @@ static PyObject* py_NativeData(PyObject* self, PyObject* args) {
 
     PyList_SetItem(Attrs, 0, PyFloat_FromDouble(Height)); 
     PyList_SetItem(Attrs, 1, PyFloat_FromDouble(Width));  
+
     
     return Attrs;
+}
+
+static PyObject* py_RegisterEntity(PyObject* self, PyObject* args) {
+    PyObject* entityInstance;
+    if (!PyArg_ParseTuple(args, "O", &entityInstance)) {
+        return nullptr;
+    }
+
+    if (!PyObject_HasAttrString(entityInstance, "draw") || 
+        !PyObject_HasAttrString(entityInstance, "update")) {
+        PyErr_SetString(PyExc_TypeError, "Entity must have draw() and update(dt) methods");
+        return nullptr;
+    }
+        auto entity = std::make_unique<PythonEntity>(entityInstance); 
+        app.AddEntity(std::move(entity)); 
+    
+    Py_RETURN_NONE;
 }
 
 
@@ -291,6 +361,7 @@ static PyMethodDef Methods[] = {
     {"expose", py_Expose, METH_VARARGS, "Creates a AttrObject"},
     {"getAttrs", py_NativeData, METH_VARARGS, "get native Attrs"},
     {"getMouse" , GetMouseData , METH_NOARGS , "Get Mouse Data"},
+    {"RegisterEntity", py_RegisterEntity ,METH_VARARGS , "RegesterME"},
     {NULL, NULL, 0, NULL}  
 };
 
@@ -302,18 +373,20 @@ static PyModuleDef Module = {
     Methods
 };
 
-
-PyMODINIT_FUNC Engine() {
+PyMODINIT_FUNC PyInit_Krooz(void) {
     return PyModule_Create(&Module);
 }
+
 
 int main() {
     InitWindow(1200, 600, "Krooz Engine");
     SetTargetFPS(60);
-    PyImport_AppendInittab("Krooz", &Engine);
+    
+    PyImport_AppendInittab("Krooz", &PyInit_Krooz);
     Py_Initialize();    
     Loader RuntimeLoader;
     std::string source = "src";
+
 
     if (!RuntimeLoader.Get_RuntimeModules(source)) {
         Py_Finalize();
@@ -324,6 +397,8 @@ int main() {
     int times = 100;
     while (!WindowShouldClose()) {
         float Delta = GetFrameTime();
+
+        app.UpdateEntity(Delta);
         if (IsKeyPressed(KEY_W)) {
             Rest();
             RuntimeLoader.Reload_RuntimeModules();
@@ -355,9 +430,12 @@ int main() {
         for(auto& ent : GlobalAttrUpdate){
             ent.val += ent.UpdateVal*Delta;
         }
+        app.DrawEntity();
         EndDrawing();
     }
 
-    Py_Finalize();  
+    Py_Finalize();
+  
     return 0;
 }
+

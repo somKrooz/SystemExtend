@@ -9,7 +9,7 @@ REM Output executable
 set OUT=Engine.exe
 
 REM Source file
-set SRC=Engine.cpp Loader.cpp
+set SRC=Engine.cpp Loader.cpp  Application.cpp
 
 REM Include directories
 set INCLUDES=/I"./vendor/Python/include"^
