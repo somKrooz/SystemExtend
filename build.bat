@@ -21,7 +21,7 @@ set LIBPATHS=/LIBPATH:"./vendor/Python\lib" ^
              /LIBPATH:"./vendor/raylib/lib"
 
 REM Libraries to link
-set LIBS=python312.lib ^
+set LIBS=python313.lib ^
         raylib.lib ^
         legacy_stdio_definitions.lib ^
         msvcrt.lib ^
@@ -34,7 +34,7 @@ set LIBS=python312.lib ^
         /NODEFAULTLIB:MSVCRT /NODEFAULTLIB:LIBCMT
 
 REM Build the project /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup
-%CC% %CFLAGS% /Fe:%OUT% %SRC% %INCLUDES% /link %LIBPATHS% %LIBS% 
+%CC% %CFLAGS% /Fe:%OUT% %SRC% %INCLUDES% /link %LIBPATHS% %LIBS%
 
 
 echo Build Successfully Done...

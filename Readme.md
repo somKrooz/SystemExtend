@@ -1,37 +1,30 @@
-# Krooz Engine
+# System Extend
 
-## Overview
-Krooz Engine is a personal learning project for exploring game development, Python-C++ integration, and interactive application frameworks. It combines C++ and Python with Raylib to create a runtime environment for building interactive Thing.
+A learning project for experimenting with C++/Python integration, runtime scripting, and game dev using Raylib.
 
 ## Features
-- Integrated Python runtime
-- Dynamic module loading
-- Runtime module reloading
-- Callback system
-- Simple attribute management
+- Embedded Python scripting
+- Hot-reload scripts at runtime (W to reload)
+- Dynamic module loading & callbacks
+- Simple UI elements (text, buttons, textures)
+- Simple State Management
 
-## Dependencies
-- Python
-- Raylib
-- C++17 or later
-- Filesystem support
 
-## Key Components
-- Dynamic text rendering
-- Interactive button creation
-- Pixel/texture management
-- Callback registration
-- Attribute updates
+```python
+import Krooz
 
-## Usage
-1. Ensure all dependencies are installed
-2. Place Python modules in the `src` directory
-3. Compile the engine
-4. Run the executable
+class MyEntity:
+    def __init__(self):
+        self.pox = 0
 
-### Hotkeys
-- Press `W` to reload runtime modules
+    def update(self, dt):
+        self.pox += 10 *dt
 
-## Build Requirements
-- Python development headers
-- Raylib development library
+    def draw(self):
+        Krooz.create_text("This", self.pox , 100 , 30, 100 )
+
+krooz = MyEntity()
+Krooz.RegisterEntity(krooz)
+
+# All The Python Scripts In The Src Folder will be loaded and
+# Evaluated By the Engine At Runtime

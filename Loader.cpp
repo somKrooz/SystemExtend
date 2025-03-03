@@ -1,17 +1,17 @@
 #include "Loader.h"
-#include <filesystem> 
-#include <iostream>  
+#include <filesystem>
+#include <iostream>
 
 bool Loader::Get_RuntimeModules(std::string Path){
     namespace fs = std::filesystem;
     for(auto &ent : fs::directory_iterator(Path)){
         PyObject* System_Path = PySys_GetObject("path");
-        PyObject* ExtPath = PyUnicode_FromString(Path.c_str()); 
+        PyObject* ExtPath = PyUnicode_FromString(Path.c_str());
         PyList_Append(System_Path , ExtPath);
         Py_DECREF(ExtPath);
-        
+
         if(ent.path().extension() == ".py"){
-            const std::string GoodPath = ent.path().stem().string(); 
+            const std::string GoodPath = ent.path().stem().string();
             ModuleName.push_back(GoodPath);
             PyObject* ModName = PyUnicode_FromString(GoodPath.c_str());
             PyObject* module = PyImport_Import(ModName);
@@ -35,7 +35,7 @@ void Loader::ExecuteBatch(){
         if (Krooz && PyCallable_Check(Krooz)) {
             PyObject* Res = PyObject_CallObject(Krooz, nullptr);
             Py_DECREF(Res);
-        } 
+        }
         else{
            PyErr_Print();
            continue;
@@ -50,17 +50,17 @@ void Loader::LookForNew(const std::string Path) {
     for (const auto& ent : fs::directory_iterator(Path)) {
         if (ent.path().extension() == ".py") {
             const std::string GoodPath = ent.path().stem().string();
-            
+
             auto it = std::find(ModuleName.begin(), ModuleName.end(), GoodPath);
-            if (it == ModuleName.end()) {  
+            if (it == ModuleName.end()) {
                 std::cout<<GoodPath<<" Added This New Module"<<"\n";
                 PyObject* ModName = PyUnicode_FromString(GoodPath.c_str());
                 PyObject* module = PyImport_Import(ModName);
                 Py_DECREF(ModName);
 
                 if (module) {
-                    RuntimeModules.push_back(module);   
-                    ModuleName.push_back(GoodPath);    
+                    RuntimeModules.push_back(module);
+                    ModuleName.push_back(GoodPath);
                 } else {
                     PyErr_Print();
                 }
@@ -70,7 +70,7 @@ void Loader::LookForNew(const std::string Path) {
 }
 
 int Loader::GetLength(){
-    return RuntimeModules.size();   
+    return RuntimeModules.size();
 }
 
 std::vector<PyObject*> Loader::GetModules(){
